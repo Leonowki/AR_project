@@ -1,189 +1,134 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useEffect, useState } from "react"
 
 function App() {
   const [isARReady, setIsARReady] = useState(false)
-  const [arStatus, setArStatus] = useState('Initializing AR...')
   const [sceneStarted, setSceneStarted] = useState(false)
+  const [arStatus, setArStatus] = useState("Initializing AR...")
 
+  /* Load A-Frame + MindAR */
   useEffect(() => {
-    // Wait for A-Frame and MindAR to load
-    const checkAFrameLoaded = setInterval(() => {
+    const interval = setInterval(() => {
       if (window.AFRAME && window.MINDAR) {
         setIsARReady(true)
-        setArStatus('AR Ready - Allow camera access')
-        clearInterval(checkAFrameLoaded)
+        setArStatus("AR Ready – Allow camera access")
+        clearInterval(interval)
       }
     }, 100)
 
     const timeout = setTimeout(() => {
       if (!isARReady) {
-        setArStatus('Failed to load AR libraries')
-        clearInterval(checkAFrameLoaded)
+        setArStatus("Failed to load AR libraries")
+        clearInterval(interval)
       }
     }, 10000)
 
     return () => {
-      clearInterval(checkAFrameLoaded)
+      clearInterval(interval)
       clearTimeout(timeout)
     }
   }, [isARReady])
 
+  /* MindAR events */
   useEffect(() => {
     if (!isARReady) return
 
-    // Listen for MindAR events
-    const sceneEl = document.querySelector('a-scene')
-    
-    if (sceneEl) {
-      sceneEl.addEventListener('arReady', () => {
-        setSceneStarted(true)
-        setArStatus('AR Started - Point camera at target image')
-      })
+    const sceneEl = document.querySelector("a-scene")
+    if (!sceneEl) return
 
-      sceneEl.addEventListener('arError', (event) => {
-        setArStatus(' AR Error: ' + event.detail.error)
-      })
+    const onReady = () => {
+      setSceneStarted(true)
+      setArStatus("AR Started – Point camera at target image")
+    }
+
+    const onError = (e) => {
+      setArStatus(`AR Error: ${e.detail?.error || "Unknown error"}`)
+    }
+
+    sceneEl.addEventListener("arReady", onReady)
+    sceneEl.addEventListener("arError", onError)
+
+    return () => {
+      sceneEl.removeEventListener("arReady", onReady)
+      sceneEl.removeEventListener("arError", onError)
     }
   }, [isARReady])
 
+  /* Loading screen */
   if (!isARReady) {
     return (
-      <div style={{
-        width: '100vw',
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#1a1a1a',
-        color: 'white',
-        fontFamily: 'system-ui'
-      }}>
-        <div style={{
-          width: '50px',
-          height: '50px',
-          border: '5px solid #f3f3f3',
-          borderTop: '5px solid #3498db',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          marginBottom: '20px'
-        }} />
-        <h2>{arStatus}</h2>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-zinc-900 text-white">
+        <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-zinc-700 border-t-blue-600" />
+        <h2 className="text-lg font-semibold">{arStatus}</h2>
       </div>
     )
   }
 
   return (
     <>
-      {/* Status overlay */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: sceneStarted ? '#4CAF50' : '#FF9800',
-        color: 'white',
-        padding: '12px',
-        textAlign: 'center',
-        zIndex: 9999,
-        fontFamily: 'system-ui',
-        fontSize: '14px',
-        fontWeight: 'bold'
-      }}>
+      {/* Status bar */}
+      <div
+        className={`fixed top-0 left-0 right-0 p-3 text-center text-sm font-bold text-white ${
+          sceneStarted ? "bg-green-600" : "bg-orange-600"
+        }`}
+        style={{ zIndex: 9999 }}
+      >
         {arStatus}
       </div>
 
       {/* Instructions */}
-      <div style={{
-        position: 'fixed',
-        bottom: 20,
-        left: 20,
-        right: 20,
-        backgroundColor: 'rgba(0,0,0,0.85)',
-        color: 'white',
-        padding: '20px',
-        borderRadius: '12px',
-        zIndex: 9999,
-        fontFamily: 'system-ui',
-        fontSize: '14px',
-        maxWidth: '400px',
-        margin: '0 auto'
-      }}>
-        <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>
-           How to Test:
-        </h3>
-        <ol style={{ margin: '10px 0', paddingLeft: '20px', lineHeight: '1.6' }}>
-          <li>Allow camera access when prompted</li>
-          <li>Open this target image on another device or print it: 
-            <a 
+      <div 
+        className="fixed bottom-5 left-5 right-5 mx-auto max-w-md rounded-xl bg-black bg-opacity-85 p-5 text-sm text-white"
+        style={{ zIndex: 9999 }}
+      >
+        <h3 className="mb-2 text-base font-semibold">How to Test:</h3>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li>Allow camera access</li>
+          <li>
+            Open the target image:
+            <a
               href="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ 
-                color: '#4CAF50', 
-                display: 'block',
-                marginTop: '5px',
-                wordBreak: 'break-all'
-              }}
+              className="mt-1 block text-green-400 underline break-all"
             >
               View Target Image
             </a>
           </li>
           <li>Point your camera at the image</li>
-          <li>A 3D model should appear on top of the image!</li>
+          <li>A 3D model should appear</li>
         </ol>
       </div>
 
-      {/* A-Frame Scene with MindAR */}
+      {/* AR Scene */}
       <a-scene
         mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
-        color-space="sRGB"
         renderer="colorManagement: true, physicallyCorrectLights"
+        color-space="sRGB"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         embedded
-        style={{ width: '100vw', height: '100vh' }}
+        className="h-screen w-screen"
       >
-        {/* Assets */}
         <a-assets>
-          <img 
-            id="card" 
+          <img
+            id="card"
             src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png"
             crossOrigin="anonymous"
           />
-          <a-asset-item 
-            id="avatarModel" 
+          <a-asset-item
+            id="avatarModel"
             src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"
           />
         </a-assets>
 
-        {/* Camera */}
-        <a-camera position="0 0 0" look-controls="enabled: false" />
+        <a-camera look-controls="enabled: false" />
 
-        {/* Image Target */}
         <a-entity mindar-image-target="targetIndex: 0">
-          {/* The card image as background */}
-          <a-plane 
-            src="#card" 
-            position="0 0 0" 
-            height="0.552" 
-            width="1" 
-            rotation="0 0 0"
-          />
-          
-          {/* 3D Model */}
-          <a-gltf-model 
-            rotation="0 0 0" 
-            position="0 0 0.1" 
-            scale="0.005 0.005 0.005" 
+          <a-plane src="#card" height="0.552" width="1" />
+          <a-gltf-model
             src="#avatarModel"
+            position="0 0 0.1"
+            scale="0.005 0.005 0.005"
             animation="property: position; to: 0 0.1 0.1; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"
           />
         </a-entity>
