@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import Navbar from "./Navbar"
 
 function App() {
   const [isARReady, setIsARReady] = useState(false)
@@ -64,21 +65,24 @@ function App() {
   }
 
   return (
-    <>
-      {/* Status bar */}
+    <div className="relative h-screen w-screen bg-black">
+      {/* Navbar fixed on top */}
+      <Navbar />
+
+      {/* StatusBar below navbar */}
       <div
-        className={`fixed top-0 left-0 right-0 p-3 text-center text-sm font-bold text-white ${
+        className={`fixed top-8 left-0 right-0 p-3 text-center text-sm font-bold text-white ${
           sceneStarted ? "bg-green-600" : "bg-orange-600"
         }`}
-        style={{ zIndex: 9999 }}
+        style={{ zIndex: 50 }}
       >
         {arStatus}
       </div>
 
-      {/* Instructions */}
-      <div 
-        className="fixed bottom-5 left-5 right-5 mx-auto max-w-md rounded-xl bg-black bg-opacity-85 p-5 text-sm text-white"
-        style={{ zIndex: 9999 }}
+      {/* AR instructions below StatusBar */}
+      <div
+        className="fixed top-32 left-5 right-5 mx-auto max-w-md rounded-xl bg-black bg-opacity-85 p-5 text-sm text-white"
+        style={{ zIndex: 40 }}
       >
         <h3 className="mb-2 text-base font-semibold">How to Test:</h3>
         <ol className="list-decimal space-y-2 pl-5">
@@ -99,7 +103,7 @@ function App() {
         </ol>
       </div>
 
-      {/* AR Scene */}
+      {/* AR Scene filling the rest */}
       <a-scene
         mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;"
         renderer="colorManagement: true, physicallyCorrectLights"
@@ -107,7 +111,7 @@ function App() {
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         embedded
-        className="h-screen w-screen"
+        className="absolute top-0 left-0 h-full w-full"
       >
         <a-assets>
           <img
@@ -133,7 +137,7 @@ function App() {
           />
         </a-entity>
       </a-scene>
-    </>
+    </div>
   )
 }
 
